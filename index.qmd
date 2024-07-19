@@ -1,0 +1,20 @@
+---
+title: "Playing with Queues"
+listing:
+  contents: posts
+  sort: "date desc"
+  type: default
+  categories: true
+  sort-ui: false
+  filter-ui: false
+page-layout: full
+title-block-banner: true
+---
+
+In this blog, I'm recording all of my simple experiments with queueing theory. I
+watched [a video about Disney's
+FastPass](https://www.youtube.com/watch?v=9yjZpBq1XBE&t=2334s) even though I
+generally don't care about Disney parks at all, and the video got me interested
+in thinking about queueing theory, specifically how to simulate queues and
+understand the distribution of waiting times and factors that affect waiting
+time.

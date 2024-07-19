@@ -1,0 +1,105 @@
+---
+title: "Poisson Process Simulation"
+author: "Zane"
+date: "2024-07-18"
+categories: [simulation, playing around]
+---
+
+Most queueing processes seem to be based on Poisson processes. In general,
+people arrive to a queueing system at random times, and the *stochastic
+process* formed by these random arrivals is often modelled using a
+**Poisson process**. A Poisson process is a stochastic process in continuous
+time where the time between events follows an exponential distribution,
+$$f_X(x) = \lambda \exp\left(-\lambda x \right); \quad x > 0.$$
+The parameter $\lambda$ is the rate of the process and can be interpreted as the
+number of individuals we expect to arrive in an instantaneous interval.
+http://127.0.0.1:11145/graphics/plot_zoom_png?width=1862&height=990
+So, in order to simulate a Poisson process, we simply need to simulate independent
+exponential random draws, which represent the time interval in between the ocurrence
+of each event. Then, the first arrival time is the first interarrival time, the
+second arrival time is the sum of the first two interarrival times, and so on.
+That is, letting $X_1, \ldots, X_n$ be the first $n$ interarrival times,
+$$X_i \stackrel{\text{i.i.d.}}{\sim} \mathcal{E}(\lambda),$$
+where $\mathcal{E}$ is the exponential distribution; and the $i$th arrival
+time is then
+$$ S_i = \sum_{k=1}^i X_k.$$http://127.0.0.1:11145/graphics/plot_zoom_png?width=1862&height=990
+
+```{r}
+# Parameters
+N <- 100L # Number of interarrival times to generate
+# Rate of the Poisson process (events per time unit)
+lambda <- 0.5 # one customber every 2 time units, say minutes
+N_sims <- 500L
+set.seed(9348013)
+
+# First simulate the interarrival times
+interarrival_times <- matrix(rexp(N * N_sims, lambda), nrow = N, ncol = N_sims)
+# Get the cumulative sums to get actual arrival times
+arrival_times <- apply(interarrival_times, 2, cumsum)
+# Write the vector of integer times to check the queue at
+monitoring_times <- seq(0, ceiling(max(arrival_times)), 1)
+# Calculate the total number in the queue at the ith arrival time
+total_in_queue <- apply(arrival_times, 2, \(x) sapply(monitoring_times, \(t) sum(x <= t)))
+# Calculate the mean ith arrival time across simulations
+mean_arrival_times <- rowMeans(arrival_times)
+# And the total in queue based on the mean arrival time
+mean_tiq <- sapply(monitoring_times, \(t) sum(mean_arrival_times <= t))
+
+layout(matrix(1:2, nrow = 1))
+plot(
+	NULL, NULL,
+	xlab = "Arrival time",
+	ylab = "Cumulative number of arrivals",
+	main = expression("Arrivals over time following a Poisson process with"~lambda~'='~0.5),
+	type = 's',
+	xlim = c(0, ceiling(max(arrival_times))),
+	ylim = c(0, N)
+)
+
+for (i in 1:N_sims) {
+	lines(
+		arrival_times[, i],
+		1:N,
+		lwd = 1,
+		col = adjustcolor("black", alpha.f = 0.25),
+		type = 's'
+	)
+}
+
+lines(
+	mean_arrival_times,
+	1:N,
+	lwd = 4,
+	col = "dodgerblue",
+	type = "s"
+)
+
+plot(
+	NULL, NULL,
+	xlab = "Time queue is checked",
+	ylab = "Number in queue",
+	main = expression("Queue length over time following a Poisson process with"~lambda~'='~0.5~"and no departures"),
+	type = 's',
+	xlim = c(0, ceiling(max(arrival_times))),
+	ylim = c(0, N)
+)
+
+for (i in 1:N_sims) {
+	lines(
+		monitoring_times,
+		total_in_queue[, i],
+		lwd = 1,
+		col = adjustcolor("black", alpha.f = 0.25),
+		type = 's'
+	)
+}
+
+lines(
+	monitoring_times,
+	mean_tiq,
+	lwd = 4,
+	col = "dodgerblue",
+	type = "s"
+)
+```
+
